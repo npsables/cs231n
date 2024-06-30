@@ -47,7 +47,7 @@ def svm_loss_naive(W, X, y, reg):
 
     # Add regularization to the loss.
     loss += reg * np.sum(np.square(W))
-    dW +=  reg * 2 * W
+    dW += reg * 2 * W
     #############################################################################
     # TODO:                                                                     #
     # Compute the gradient of the loss function and store it dW.                #
@@ -74,8 +74,8 @@ def svm_loss_vectorized(W, X, y, reg):
     loss = 0.0
     dW = np.zeros(W.shape)  # initialize the gradient as zero
 
-    # print(W.shape)
-    # print(X.shape)
+    # print(W.shape) # (3073, 10)
+    # print(X.shape) # (500, 3073)
     #############################################################################
     # TODO:                                                                     #
     # Implement a vectorized version of the structured SVM loss, storing the    #
@@ -84,10 +84,10 @@ def svm_loss_vectorized(W, X, y, reg):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     scores = X@W
+    # print(y.shape)
     # print(scores.shape)
     # print(scores[y].shape)
     # print(scores[y.reshape(y.shape[0], 1)])
-    # correct_scores = scores[y.]
     # print(scores[0][y[0]])
     # print(scores[np.arange(len(scores)), y][0])
     margins = np.maximum(0, scores - scores[np.arange(len(scores)), y].reshape(y.shape[0], 1) + 1)
@@ -108,7 +108,10 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    # pass
+    filter = (margins > 0).astype("int")
+    filter[np.arange(len(scores)), y] -= np.sum(filter, axis=1)
+    dW = X.T @ filter / X.shape[0]
+    dW += reg * 2 * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
