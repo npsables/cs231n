@@ -34,7 +34,17 @@ def softmax_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    num_train = X.shape[0]    
+    for i in range(num_train):
+        scores = X[i] @ W # 1, C
+        scores = scores - np.max(scores) # lecture note where??!
+        scores = np.exp(scores) / np.sum(np.exp(scores))
+        loss += -np.log(scores[y[i]])
+        scores[y[i]] -= 1
+        dW += X[i].T.reshape(X.shape[1], 1) @ scores.reshape(1, len(scores))
+
+    loss = loss/num_train + reg * np.sum(np.square(W))
+    dW = dW/num_train + reg * 2 * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -58,9 +68,17 @@ def softmax_loss_vectorized(W, X, y, reg):
     # regularization!                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    
+    num_train = X.shape[0]
+    scores = X@W
+    scores = np.exp(scores) / np.sum(np.exp(scores), axis=1, keepdims=1)
+    loss = np.sum(-np.log(scores[np.arange(len(scores)), y]))
+    scores[np.arange(len(scores)), y] -= 1
+    dW = X.T @ scores
 
-    pass
-
+    loss = loss/num_train + reg * np.sum(np.square(W))
+    dW = dW/num_train + reg * 2 * W
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     return loss, dW
