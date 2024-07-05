@@ -28,7 +28,7 @@ def affine_forward(x, w, b):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    out = x.reshape(x.shape[0], -1) @ w + b
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -61,7 +61,9 @@ def affine_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    db = np.sum(dout, axis=0)
+    dx = (dout @ w.T).reshape(x.shape)
+    dw = x.reshape(x.shape[0], -1).T @ dout
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -87,7 +89,8 @@ def relu_forward(x):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    mask = (x > 0).astype("int")
+    out = mask * x
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -114,7 +117,8 @@ def relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    mask = (x > 0).astype("int")
+    dx = mask * dout
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -773,7 +777,14 @@ def svm_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    margins = np.maximum(0, x - x[np.arange(len(x)), y].reshape(y.shape[0], 1) + 1)
+    margins[np.arange(len(x)), y] -= 1
+    loss = np.sum(margins) / x.shape[0]
+
+    filter = (margins > 0).astype("int")
+    filter[np.arange(len(x)), y] -= np.sum(filter, axis=1)
+    dx = filter / x.shape[0] # no weight (way) !!!
+    # print(dx)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -803,7 +814,11 @@ def softmax_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    scores = np.exp(x) / np.sum(np.exp(x), axis=1, keepdims=1)
+    loss = np.sum(-np.log(scores[np.arange(len(scores)), y]))
+    loss = loss/x.shape[0]
+    scores[np.arange(len(scores)), y] -= 1
+    dx = scores / x.shape[0]
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

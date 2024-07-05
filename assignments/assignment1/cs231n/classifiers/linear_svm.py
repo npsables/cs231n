@@ -84,12 +84,6 @@ def svm_loss_vectorized(W, X, y, reg):
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     scores = X@W
-    # print(y.shape)
-    # print(scores.shape)
-    # print(scores[y].shape)
-    # print(scores[y.reshape(y.shape[0], 1)])
-    # print(scores[0][y[0]])
-    # print(scores[np.arange(len(scores)), y][0])
     margins = np.maximum(0, scores - scores[np.arange(len(scores)), y].reshape(y.shape[0], 1) + 1)
     margins[np.arange(len(scores)), y] -= 1
     loss = np.sum(margins) / X.shape[0]

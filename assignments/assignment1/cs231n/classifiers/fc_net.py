@@ -55,8 +55,16 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        W1 = np.random.normal(0, weight_scale, input_dim * hidden_dim).reshape(input_dim, hidden_dim)
+        W2 = np.random.normal(0, weight_scale, hidden_dim * num_classes).reshape(hidden_dim, num_classes)
+        b1 = np.zeros(hidden_dim)
+        b2 = np.zeros(num_classes)
 
+        self.params['W1'] = W1
+        self.params['b1'] = b1
+        self.params['W2'] = W2
+        self.params['b2'] = b2
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -88,7 +96,12 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        scores, cache1 = affine_forward(X, self.params['W1'], self.params['b1'])
+        scores, rcache1 = relu_forward(scores)
+        scores, cache2 = affine_forward(scores, self.params['W2'], self.params['b2'])
+        scores, rcache2 = relu_forward(scores)
+
+        # scores = scores @ 
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -112,8 +125,22 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, grad = softmax_loss(scores, y)
+        loss = loss + 0.5 * self.reg * np.sum(np.square(self.params['W2'])) + 0.5 * self.reg * np.sum(np.square(self.params['W1']))
+        
+        # Why don't you add reg to grad of loss?
+        # grad += self.reg * self.params['W2'] + self.reg * self.params['W1']
 
+        x = relu_backward(grad, rcache2)
+        x, grads['W2'], grads['b2'] = affine_backward(x, cache2)
+        x = relu_backward(x, rcache1)
+        _, grads['W1'], grads['b1'] = affine_backward(x, cache1)
+
+        # print(grads['W2'].shape, self.params['W2'].shape)
+        grads['W2'] += self.reg * self.params['W2']
+        grads['W1'] += self.reg * self.params['W1']
+
+        # print(grads['W2'])
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
