@@ -99,7 +99,7 @@ class TwoLayerNet(object):
         scores, cache1 = affine_forward(X, self.params['W1'], self.params['b1'])
         scores, rcache1 = relu_forward(scores)
         scores, cache2 = affine_forward(scores, self.params['W2'], self.params['b2'])
-        scores, rcache2 = relu_forward(scores)
+        # scores, rcache2 = relu_forward(scores)
 
         # scores = scores @ 
 
@@ -131,8 +131,8 @@ class TwoLayerNet(object):
         # Why don't you add reg to grad of loss?
         # grad += self.reg * self.params['W2'] + self.reg * self.params['W1']
 
-        x = relu_backward(grad, rcache2)
-        x, grads['W2'], grads['b2'] = affine_backward(x, cache2)
+        # x = relu_backward(grad, rcache2)
+        x, grads['W2'], grads['b2'] = affine_backward(grad, cache2)
         x = relu_backward(x, rcache1)
         _, grads['W1'], grads['b1'] = affine_backward(x, cache1)
 
