@@ -74,9 +74,14 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        # for i in range(self.num_layers):
+        for i, (x, y) in enumerate(list(zip([input_dim] + hidden_dims, hidden_dims))):
+            print(i, x, y)
+            self.params[f'W{i}'] = np.random.normal(0, weight_scale, x * y).reshape(x, y)
+            self.params[f'b{i}'] = np.zeros(y)
+            if i < len(hidden_dims):
+                self.params[f'gamma{i}'] = np.ones_like(self.params[f'W{i}'])
+                self.params[f'beta{i}'] = np.zeros_like(self.params[f'b{i}'])
             
-
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
