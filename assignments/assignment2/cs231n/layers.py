@@ -27,7 +27,6 @@ def affine_forward(x, w, b):
 
     out = x.reshape(x.shape[0], -1) @ w + b
 
-
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
