@@ -224,7 +224,14 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        mean = x.mean(0, keepdims=True)
+        var = x.var(0, keepdims=True) + eps
+        std = np.sqrt(var)
+        running_mean = momentum * running_mean + (1 - momentum) * mean
+        running_var = momentum * running_var + (1 - momentum) * std
+        xhat = (x - mean) / std
+        out = gamma * (x - mean) / std + beta
+        cache = x, gamma, beta, mean, var, xhat
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -239,7 +246,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        out = gamma * (x - running_mean) / running_var + beta
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -280,7 +287,13 @@ def batchnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, gamma, beta, mean, var, xhat = cache
+    dxhat = dout * gamma
+    dvar = np.sum(dxhat * (x - mean), axis=0) * -0.5 * var**(-3/2) 
+    dmean = np.sum(dxhat * -var**(-1/2), axis=0) + dvar *  1/x.shape[0] * np.sum(-2 * (x - mean), axis=0)
+    dx = dxhat * var**(-1/2) + dmean * 1/x.shape[0] + dvar * 2 * (x - mean) / x.shape[0]
+    dgamma = np.sum(dout * xhat, axis=0)
+    dbeta = np.sum(dout, axis=0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -314,7 +327,11 @@ def batchnorm_backward_alt(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, gamma, beta, mean, var, xhat = cache
+    m = x.shape[0]
+    dx = gamma*var**-0.5/m * (m*dout - dout.sum(0) - xhat*(dout * xhat).sum(0))
+    dgamma = np.sum(dout * xhat, axis=0)
+    dbeta = np.sum(dout, axis=0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

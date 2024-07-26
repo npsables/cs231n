@@ -78,9 +78,9 @@ class FullyConnectedNet(object):
             self.params[f'W{i+1}'] = np.random.normal(0, weight_scale, x * y).reshape(x, y)
             self.params[f'b{i+1}'] = np.zeros(y)
             if self.normalization and i < len(hidden_dims):
-                self.params[f'gamma{i+1}'] = np.ones_like(self.params[f'W{i+1}'])
-                self.params[f'beta{i+1}'] = np.zeros_like(self.params[f'b{i+1}'])
-            
+                self.params[f'gamma{i+1}'] = np.ones(y)
+                self.params[f'beta{i+1}'] = np.zeros(y)
+
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -158,6 +158,8 @@ class FullyConnectedNet(object):
         for i in range(1, self.num_layers + 1):
             scores, cache[f'L{i}'] = affine_forward(X if i == 1 else scores, self.params[f'W{i}'], self.params[f'b{i}'])
             if i < self.num_layers:
+                if self.normalization == "batchnorm":
+                    scores, cache[f'norm{i}'] = batchnorm_forward(scores, self.params[f'gamma{i}'], self.params[f'beta{i}'], self.bn_params[i-1])
                 scores, cache[f'rL{i}'] = relu_forward(scores)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -190,10 +192,12 @@ class FullyConnectedNet(object):
             loss += 0.5 * self.reg * np.sum(np.square(self.params[f'W{i}']))
             if i < self.num_layers:
                 x = relu_backward(x, cache[f'rL{i}'])
+                if self.normalization == "batchnorm":
+                    x, grads[f'gamma{i}'], grads[f'beta{i}'] = batchnorm_backward(x, cache[f'norm{i}'])
             x, grads[f'W{i}'], grads[f'b{i}'] = affine_backward(grad if i == self.num_layers else x, cache[f'L{i}'])
+            grads[f'W{i}'] += self.reg * self.params[f'W{i}']
+            grads[f'b{i}'] += self.reg * self.params[f'b{i}']
 
-        for g in grads:
-            grads[g] += self.reg * self.params[g]
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
