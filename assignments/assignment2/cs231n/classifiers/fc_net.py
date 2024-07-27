@@ -160,6 +160,8 @@ class FullyConnectedNet(object):
             if i < self.num_layers:
                 if self.normalization == "batchnorm":
                     scores, cache[f'norm{i}'] = batchnorm_forward(scores, self.params[f'gamma{i}'], self.params[f'beta{i}'], self.bn_params[i-1])
+                if self.normalization == "layernorm":
+                    scores, cache[f'layer{i}'] = layernorm_forward(scores, self.params[f'gamma{i}'], self.params[f'beta{i}'], self.bn_params[i-1])
                 scores, cache[f'rL{i}'] = relu_forward(scores)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -194,10 +196,12 @@ class FullyConnectedNet(object):
                 x = relu_backward(x, cache[f'rL{i}'])
                 if self.normalization == "batchnorm":
                     x, grads[f'gamma{i}'], grads[f'beta{i}'] = batchnorm_backward(x, cache[f'norm{i}'])
+                if self.normalization == "layernorm":
+                    x, grads[f'gamma{i}'], grads[f'beta{i}'] = layernorm_backward(x, cache[f'layer{i}'])
             x, grads[f'W{i}'], grads[f'b{i}'] = affine_backward(grad if i == self.num_layers else x, cache[f'L{i}'])
             grads[f'W{i}'] += self.reg * self.params[f'W{i}']
             grads[f'b{i}'] += self.reg * self.params[f'b{i}']
-
+            # no need regularize (weight decay, wow!!!)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
