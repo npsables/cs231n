@@ -141,9 +141,11 @@ def softmax_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+    x -= np.max(x, axis=1, keepdims=1)
     scores = np.exp(x) / np.sum(np.exp(x), axis=1, keepdims=1)
     loss = np.sum(-np.log(scores[np.arange(len(scores)), y]))
-    loss = loss/x.shape[0]
+    loss = loss / x.shape[0]
+
     scores[np.arange(len(scores)), y] -= 1
     dx = scores / x.shape[0]
     
@@ -467,7 +469,8 @@ def dropout_forward(x, dropout_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        mask = (np.random.rand(*x.shape) < p) / p # fukcine shit this is uniform
+        out = mask * x
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -479,7 +482,7 @@ def dropout_forward(x, dropout_param):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        out = x
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -509,7 +512,7 @@ def dropout_backward(dout, cache):
         #######################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        dx = dout * mask
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
