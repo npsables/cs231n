@@ -556,8 +556,25 @@ def conv_forward_naive(x, w, b, conv_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    pad = conv_param['pad']
+    stride = conv_param['stride']
+    xpad = np.pad(x.copy(),((0,0), (0,0), (pad,pad), (pad,pad)), constant_values=0)
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    Hout = 1 + (H + 2 * pad - HH) // stride
+    Wout = 1 + (W + 2 * pad - WW) // stride
 
+    out = np.empty((N, F, Hout, Wout))
+
+    for dindex, data in enumerate(xpad):
+        for findex, f in enumerate(w):
+            for i in range(0, W - WW + 1 + pad*2, stride):
+                for j in range(0, H - HH + 1 + pad*2, stride):
+                    outi = i//stride
+                    outj = j//stride
+                    out[dindex][findex][outi][outj] = np.sum(f * data[:, i:i+WW, j:j+HH])
+            out[dindex][findex] += b[findex]
+    
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -584,7 +601,29 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+
+    x, w, b, conv_param = cache
+    pad = conv_param['pad']
+    stride = conv_param['stride']
+    N, C, H, W = x.shape
+    F, C, HH, WW = w.shape
+    xpad = np.pad(x.copy(),((0,0), (0,0), (pad,pad), (pad,pad)), constant_values=0)
+
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+    dx = np.zeros_like(xpad)
+
+    for dindex, data in enumerate(xpad):
+        for findex, f in enumerate(w):
+            for i in range(0, W - WW + 1 + pad*2, stride):
+                for j in range(0, H - HH + 1 + pad*2, stride):
+                    outi = i//stride
+                    outj = j//stride
+                    dx[dindex][:, i:i+WW, j:j+HH] += f * dout[dindex][findex][outi][outj]
+                    dw[findex] += data[:, i:i+WW, j:j+HH] * dout[dindex][findex][outi][outj]
+            db[findex] += np.sum(dout[dindex][findex])
+
+    dx = dx[..., pad:-pad, pad:-pad]
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
