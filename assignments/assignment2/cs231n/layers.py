@@ -658,7 +658,20 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = x.shape
+    pheight, pwidth, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+
+    Hout = 1 + (H - pheight) // stride
+    Wout = 1 + (W - pwidth) // stride
+
+    out = np.empty((N, C, Hout, Wout))
+    for dindex, data in enumerate(x):
+        for findex, c in enumerate(data):
+            for i in range(0, W, stride):
+                for j in range(0, H, stride):
+                    outi = i//stride
+                    outj = j//stride
+                    out[dindex][findex][outi][outj] = np.max(c[i:i+stride, j:j+stride])
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -684,7 +697,21 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, pool_param = cache
+    N, C, H, W = x.shape
+    pheight, pwidth, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    dx = np.zeros_like(x)
+
+    for dindex, data in enumerate(x):
+        for findex, c in enumerate(data):
+            for i in range(0, W, stride):
+                for j in range(0, H, stride):
+                    outi = i//stride
+                    outj = j//stride
+                    a, b = np.unravel_index(c[i:i+stride, j:j+stride].argmax(), c[i:i+stride, j:j+stride].shape)
+                    # print(a, b, dx[dindex][findex][a][b])
+                    dx[dindex][findex][i+a][j+b] += dout[dindex][findex][outi][outj]
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

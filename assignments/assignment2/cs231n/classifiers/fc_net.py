@@ -204,7 +204,7 @@ class FullyConnectedNet(object):
                     x, grads[f'gamma{i}'], grads[f'beta{i}'] = layernorm_backward(x, cache[f'layer{i}'])
             x, grads[f'W{i}'], grads[f'b{i}'] = affine_backward(grad if i == self.num_layers else x, cache[f'L{i}'])
             grads[f'W{i}'] += self.reg * self.params[f'W{i}']
-            grads[f'b{i}'] += self.reg * self.params[f'b{i}']
+            grads[f'b{i}'] += self.reg * self.params[f'b{i}'] # need this?
             # no need regularize (weight decay, wow!!!)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
