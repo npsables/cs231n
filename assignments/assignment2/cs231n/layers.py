@@ -378,12 +378,15 @@ def layernorm_forward(x, gamma, beta, ln_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+    xshape = ln_param.get("xshape", None)
+    tileaxis = ln_param.get("tileaxis", None)
+
     mean = x.mean(1, keepdims=True)
     var = x.var(1, keepdims=True) + eps
     std = np.sqrt(var)
     xhat = (x - mean) / std
     out = gamma * (x - mean) / std + beta
-    cache = x, gamma, beta, mean, var, xhat
+    cache = x, gamma, beta, mean, var, xhat, xshape, tileaxis
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -417,13 +420,14 @@ def layernorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    x, gamma, beta, mean, var, xhat = cache
+    x, gamma, beta, mean, var, xhat, xshape, tileaxis = cache
     dxhat = dout * gamma
     dvar = np.sum(dxhat * (x - mean), axis=1, keepdims=True) * -0.5 * var**(-3/2) 
     dmean = np.sum(dxhat * -var**(-1/2), axis=1, keepdims=True) + dvar *  1/x.shape[1] * np.sum(-2 * (x - mean), axis=1, keepdims=True)
     dx = dxhat * var**(-1/2) + dmean * 1/x.shape[1] + dvar * 2 * (x - mean) / x.shape[1]
-    dgamma = np.sum(dout * xhat, axis=0)
-    dbeta = np.sum(dout, axis=0)
+    dgamma = dout * xhat
+    dgamma = dgamma.reshape(xshape).sum(tileaxis) if xshape is not None else dgamma.sum(0)
+    dbeta = dout.reshape(xshape).sum(tileaxis) if xshape is not None else dout.sum(0)
     
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -752,7 +756,10 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = x.shape
+    x = np.transpose(x, (0, 2, 3, 1)).reshape(-1, C)
+    out, cache = batchnorm_forward(x, gamma, beta, bn_param)
+    out = np.transpose(out.reshape(N, H, W, C), (0, 3, 1, 2))
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -785,7 +792,10 @@ def spatial_batchnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = dout.shape
+    dout = np.transpose(dout, (0, 2, 3, 1)).reshape(-1, C)
+    dx, dgamma, dbeta = batchnorm_backward(dout, cache)
+    dx = np.transpose(dx.reshape(N, H, W, C), (0, 3, 1, 2))
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -826,7 +836,16 @@ def spatial_groupnorm_forward(x, gamma, beta, G, gn_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N, C, H, W = x.shape
+    gn_param['xshape'] = x.shape
+    x = x.reshape(N*G, -1)
+    gamma = np.tile(gamma, (N, 1, H, W)).reshape(N*G, -1)
+    beta = np.tile(beta, (N, 1, H, W)).reshape(N*G, -1)
+    gn_param['tileaxis'] = (0, 2, 3)
+    
+    out, cache = layernorm_forward(x, gamma, beta, gn_param)
+    out = out.reshape(N, C, H, W)
+    cache = (G, cache)     
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -855,7 +874,15 @@ def spatial_groupnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    G, cache = cache
+    N, C, H, W = dout.shape
+    dout = dout.reshape(N*G, -1)
+
+    dx, dgamma, dbeta = layernorm_backward(dout, cache)
+    dx = dx.reshape(N, C, H, W)    
+    
+    dbeta = dbeta.reshape(1,-1,1,1)
+    dgamma = dgamma.reshape(1,-1,1,1)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
